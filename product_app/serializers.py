@@ -1,16 +1,18 @@
 from rest_framework import serializers
-from .models import Product, Attribute, AttributeValue, ProductVariant, ProductVariantAttribute
-# from authentication_app.models import Vendor
-from .models import Vendor
+from .models import Product, Attribute, AttributeValue, ProductVariant, ProductVariantAttribute, Vendor
 
+# Serializer for Product Variant
+class ProductVariantSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False,allow_null=True)  # Optional image field
 
+    class Meta:
+        model = ProductVariant
+        fields = ['sku', 'image']
+
+# Update Product Serializer to include variants
 class ProductSerializer(serializers.ModelSerializer):
     created_by = serializers.PrimaryKeyRelatedField(queryset=Vendor.objects.all())  # Vendor reference
-    variants = serializers.ListField(
-        child=serializers.CharField(),
-        write_only=True,  # This makes 'variants' input-only
-        required=True
-    )  # List of variants (SKUs)
+    variants = ProductVariantSerializer(many=True, write_only=True, required=True)  # Handle variants
     attributes = serializers.ListField(
         child=serializers.DictField(),
         write_only=True,  # This makes 'attributes' input-only
@@ -22,7 +24,6 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'created_by', 'variants', 'attributes']
 
     def create(self, validated_data):
-    # Pop 'variants' and 'attributes' from the validated_data
         variants_data = validated_data.pop('variants')
         attributes_data = validated_data.pop('attributes')
 
@@ -54,16 +55,26 @@ class ProductSerializer(serializers.ModelSerializer):
             attribute_dict[attribute] = attribute_values
 
         # Create product variants based on attribute combinations
-        from itertools import product as cartesian_product
         attribute_combinations = list(cartesian_product(*attribute_dict.values()))
 
         for idx, attribute_combination in enumerate(attribute_combinations):
-            # Generate a unique SKU using product name and index
-            base_sku = variants_data[0] if variants_data else "VARIANT"
-            unique_sku = f"{base_sku}-{idx + 1}"  # Ensure each SKU is unique
+            # Automatically generate SKU using product name and attribute values
+            attribute_names = [attribute.name for attribute in attribute_combination]
+            base_sku = f"{product.name}-{'-'.join(attribute_names)}"
+            
+            # Generate the SKU as a string with product name and attribute name combination
+            unique_sku = f"{base_sku}-{idx + 1}"
 
-            variant = ProductVariant.objects.create(product=product, sku=unique_sku)
+            variant_data = variants_data[idx] if variants_data else {}
+            variant_image = variant_data.get('image')  # Get image data for variant
 
+            variant = ProductVariant.objects.create(
+                product=product,
+                sku=unique_sku,
+                image=variant_image  # Save image if provided
+            )
+
+            # Create ProductVariantAttributes for each attribute combination
             for attribute_value in attribute_combination:
                 ProductVariantAttribute.objects.create(
                     variant=variant,
@@ -72,4 +83,3 @@ class ProductSerializer(serializers.ModelSerializer):
                 )
 
         return product
-
