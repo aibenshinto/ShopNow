@@ -37,13 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< HEAD
     'product_app',
-    'order'
-=======
+    'order',
     'cart_app',
-    'product_app'
->>>>>>> 2276ac905e619c9f8b92ea28932781b55fe7f8af
+
 ]
 
 MIDDLEWARE = [
