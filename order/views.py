@@ -18,6 +18,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 import uuid
 from .models import ORDER_STATUS_CHOICES
+from rest_framework.permissions import AllowAny
 
 class CreateOrderView(APIView):
     def post(self, request):
@@ -86,6 +87,7 @@ class OrderDetailView(APIView):
 
 
 class OrderHistoryView(APIView):
+    
     def get(self, request):
         """
         Retrieve all order history for unauthenticated users or filter by user if authenticated.
@@ -144,7 +146,30 @@ class OrderHistoryView(APIView):
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    def send_reorder_notification(self, order):
+        subject = f"Re-Order: {order.order_id}"
+        message = (
+            f"Thank you for reordering! Your new order ID is {order.order_id}."
+            f" Total price is {order.total_price}."
+        )
 
+        # Send email to the customer
+        if order.customer_email:
+            send_mail(
+                subject,
+                f"Your re-order has been placed successfully. Order ID: {order.order_id}.",
+                settings.DEFAULT_FROM_EMAIL,
+                [order.customer_email],
+            )
+
+        # Notify vendor
+        if order.vendor_email:
+            send_mail(
+                subject,
+                f"Customer reordered items. New Order ID: {order.order_id}, Total: {order.total_price}",
+                settings.DEFAULT_FROM_EMAIL,
+                [order.vendor_email],
+            )
 
 class UpdateOrderStatusView(APIView):
     def patch(self, request, order_id):
@@ -180,3 +205,84 @@ class UpdateOrderStatusView(APIView):
 
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+class ReorderView(APIView):
+    permission_classes = [AllowAny]  # Allow any user to access this view
+    
+    def post(self, request, order_id):
+        """
+        Create a new order based on a previous order.
+        Open to all users, no authentication required.
+        """
+        try:
+            # Find the original order without user filter
+            original_order = Order.objects.get(order_id=order_id)
+            items = original_order.items.all()
+
+            # Calculate total price for the new order
+            total_price = sum(item.price * item.quantity for item in items)
+
+            # Create a new order
+            new_order = Order.objects.create(
+                user=None,  # No user association
+                total_price=total_price,
+                customer_email=original_order.customer_email,
+                vendor_email=original_order.vendor_email,
+            )
+
+            # Duplicate the items in the new order
+            for item in items:
+                OrderItem.objects.create(
+                    order=new_order,
+                    product_name=item.product_name,
+                    quantity=item.quantity,
+                    price=item.price,
+                )
+
+            # Send notifications
+            self._send_reorder_notification(new_order)
+
+            serializer = OrderSerializer(new_order)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+
+        except Order.DoesNotExist:
+            return Response(
+                {"error": "Order not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def _send_reorder_notification(self, order):
+        subject = f"Re-Order: {order.order_id}"
+        
+        # Send email to the customer
+        if order.customer_email:
+            customer_message = (
+                f"Your re-order has been placed successfully.\n"
+                f"Order ID: {order.order_id}\n"
+                f"Total: ${order.total_price}"
+            )
+            send_mail(
+                subject,
+                customer_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [order.customer_email],
+            )
+
+        # Notify vendor
+        if order.vendor_email:
+            vendor_message = (
+                f"Customer reordered items.\n"
+                f"New Order ID: {order.order_id}\n"
+                f"Total: ${order.total_price}"
+            )
+            send_mail(
+                subject,
+                vendor_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [order.vendor_email],
+            )
