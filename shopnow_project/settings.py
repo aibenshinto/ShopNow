@@ -37,8 +37,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<< HEAD
+    'product_app',
+    'order'
+=======
     'cart_app',
     'product_app'
+>>>>>>> 2276ac905e619c9f8b92ea28932781b55fe7f8af
 ]
 
 MIDDLEWARE = [
@@ -123,3 +128,14 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+
+# Example for Gmail (SMTP)
+# In development, use Console backend to print emails to the terminal
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'dairyhubservices@gmail.com'
+EMAIL_HOST_PASSWORD = 'yhwxpetbusuitgag'
