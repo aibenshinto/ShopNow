@@ -1,11 +1,6 @@
 from django.contrib import admin
-from .models import Vendor, Product, Attribute, AttributeValue, ProductVariant, ProductVariantAttribute
+from .models import  Product, Attribute, AttributeValue, ProductVariant, ProductVariantAttribute
 
-@admin.register(Vendor)
-class VendorAdmin(admin.ModelAdmin):
-    list_display = ('vendor_name', 'vendor_phone', 'vendor_email', 'store_name')
-    search_fields = ('vendor_name', 'store_name')
-    list_filter = ('vendor_address',)
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
