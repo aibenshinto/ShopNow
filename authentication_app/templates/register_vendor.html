@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Vendor</title>
+    <style>
+        table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        td, th {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+    </style>
+</head>
+<body>
+    <h1>Vendor Registration</h1>
+    <form method="post" action="{% url 'register_vendor' %}">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <th scope="col"><label for="username">Username:</label></th>
+                <td><input type="text" id="username" name="user.username" required></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="password">Password:</label></th>
+                <td><input type="password" id="password" name="user.password" required></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="vendor_name">Vendor Name:</label></th>
+                <td><input type="text" id="vendor_name" name="vendor_name" required></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="vendor_phone">Phone:</label></th>
+                <td><input type="text" id="vendor_phone" name="vendor_phone" required></td>
+            </tr>
+            <tr>
+                <th scope="col"> <label for="vendor_email">Email:</label></th>
+                <td><input type="email" id="vendor_email" name="vendor_email" required></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="vendor_address">Address:</label></th>
+                <td><textarea id="vendor_address" name="vendor_address" required></textarea></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="store_name">Store Name:</label></th>
+                <td><input type="text" id="store_name" name="store_name" required></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="store_address">Store Address:</label></th>
+                <td><textarea id="store_address" name="store_address" required></textarea></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: center;">
+                    <button type="submit">Register</button>
+                </td>
+            </tr>
+            <!-- Vendor registration page -->
+
+
+        </table>
+    </form>
+ 
+</body>
+</html>

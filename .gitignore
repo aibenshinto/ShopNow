@@ -1,11 +1,21 @@
+# Bytecode files
 *.pyc
 
+# Python cache directories
 __pycache__/
+
+# Database files
 db.sqlite3
-*.sqlite3
+
+# Media files
 media/
+
+# Static files
 static/
+
+# Virtual environment
 env/
+<<<<<<< HEAD
 .env 
 *.local_env
 *.pyd
@@ -22,3 +32,8 @@ env/
 *.sqlite3-journal
 
 sampleapp/
+=======
+
+# Environment variables file
+.env
+>>>>>>> bb0d76109a5f33ca3b4fd50426a57443e9155555

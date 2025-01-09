@@ -1,32 +1,22 @@
 from rest_framework import serializers
-from .models import Product, Variant, Cart, CartItem
+from product_app.models import Product, ProductVariant  # Import from the product_app
+from .models import Cart, CartItem,ShippingAddress
 
-class ProductSerializer(serializers.ModelSerializer):
+class ProductVariantSerializer(serializers.ModelSerializer):
     """
-    Serializer for the Product model.
+    Serializer for the ProductVariant model.
     """
     class Meta:
-        model = Product
-        fields = ['id', 'name', 'description', 'price', 'stock', 'is_active', 'created_at', 'updated_at']
-
-
-class VariantSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Variant model.
-    """
-    product = ProductSerializer()  # Nested serializer to include product details
-
-    class Meta:
-        model = Variant
-        fields = ['id', 'product', 'name', 'price', 'stock', 'created_at', 'updated_at']
+        model = ProductVariant
+        fields = ['id', 'product', 'sku', 'name', 'price', 'stock', 'created_at', 'updated_at']
 
 
 class CartItemSerializer(serializers.ModelSerializer):
     """
     Serializer for CartItem model.
     """
-    product = ProductSerializer()
-    variant = VariantSerializer()
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())  # Reference Product by ID
+    variant = serializers.PrimaryKeyRelatedField(queryset=ProductVariant.objects.all(), required=False)  # Reference Variant by ID
 
     class Meta:
         model = CartItem
@@ -42,3 +32,16 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ['id', 'user', 'session_id', 'created_at', 'updated_at', 'items']
+
+class ShippingAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShippingAddress
+        fields = [
+            'id',
+            'address_line_1',
+            'address_line_2',
+            'city',
+            'state',
+            'postal_code',
+            'country',
+        ]
