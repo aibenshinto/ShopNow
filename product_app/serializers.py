@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Vendor, Category, Product, Attribute, AttributeValue, ProductVariant, ProductVariantAttribute
+from .models import Product, Attribute, AttributeValue, ProductVariant, ProductVariantAttribute
 
 
 class ProductSerializer(serializers.ModelSerializer):
