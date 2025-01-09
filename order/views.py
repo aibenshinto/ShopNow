@@ -17,9 +17,11 @@ from .serializers import OrderSerializer
 from django.core.mail import send_mail
 from django.conf import settings
 import uuid
+from decimal import Decimal
+
 from .models import ORDER_STATUS_CHOICES
 from rest_framework.permissions import AllowAny
-
+from django.db.models import Sum
 class CreateOrderView(APIView):
     def post(self, request):
         # For anonymous users, user will be None
@@ -286,3 +288,43 @@ class ReorderView(APIView):
                 settings.DEFAULT_FROM_EMAIL,
                 [order.vendor_email],
             )
+
+
+
+class VendorDashboardView(APIView):
+    def get(self, request):
+        """
+        View the vendor dashboard with all orders, sales, earnings, and admin commission.
+        """
+        # Retrieve all orders for the vendor (using the vendor email in the Order model)
+        orders = Order.objects.filter(vendor_email='farizz1132pulikkal@gmail.com')  # Single vendor email
+        total_sales = orders.aggregate(total_sales=Sum('total_price'))['total_sales'] or 0
+        earnings = self.calculate_earnings(total_sales)
+        admin_commission = self.calculate_admin_commission(total_sales)
+
+        # Format the data for the dashboard
+        dashboard_data = {
+            "total_orders": orders.count(),
+            "total_sales": total_sales,
+            "earnings": earnings,
+            "admin_commission": admin_commission,  # Admin's commission on the sales
+            "orders": OrderSerializer(orders, many=True).data,
+        }
+
+        return Response(dashboard_data, status=status.HTTP_200_OK)
+
+    def calculate_earnings(self, total_sales):
+        """
+        Calculates vendor earnings based on a commission (for example, 90% of total sales).
+        """
+        commission_rate = Decimal(0.10)  # 10% commission rate for admin
+        earnings = total_sales * (Decimal(1) - commission_rate)  # Vendor earns 90% of the total sales
+        return earnings
+
+    def calculate_admin_commission(self, total_sales):
+        """
+        Calculates admin's commission (for example, 10% of total sales).
+        """
+        commission_rate = Decimal(0.10)  # 10% commission for admin
+        admin_commission = total_sales * commission_rate
+        return admin_commission
