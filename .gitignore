@@ -1,0 +1,20 @@
+# Bytecode files
+*.pyc
+
+# Python cache directories
+__pycache__/
+
+# Database files
+db.sqlite3
+
+# Media files
+media/
+
+# Static files
+static/
+
+# Virtual environment
+env/
+
+# Environment variables file
+.env
