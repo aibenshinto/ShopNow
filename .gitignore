@@ -20,3 +20,5 @@ env/
 *.pyo
 *.so
 *.sqlite3-journal
+
+sampleapp/
