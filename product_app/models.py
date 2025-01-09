@@ -5,14 +5,14 @@ from Vender_app.models import Category
 
 class Product(models.Model):
     name = models.CharField(max_length=225)
-    created_by = models.ForeignKey('Vendor', on_delete=models.CASCADE)
-    category = models.ForeignKey('Category',on_delete=models.CASCADE)
+    created_by = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category,on_delete=models.CASCADE)
     def __str__(self):
         return f"{self.name}"
     
 class Attribute(models.Model):
     name = models.CharField(max_length=225)
-    created_by = models.ForeignKey('Vendor',on_delete=models.CASCADE)
+    created_by = models.ForeignKey(Vendor,on_delete=models.CASCADE)
     
     def __str__(self):
         return f"{self.name}"
@@ -20,7 +20,7 @@ class Attribute(models.Model):
 class AttributeValue(models.Model):
     attribute = models.ForeignKey(Attribute,on_delete=models.CASCADE)
     value = models.CharField(max_length=225)
-    created_by = models.ForeignKey('Vendor',on_delete=models.CASCADE)
+    created_by = models.ForeignKey(Vendor,on_delete=models.CASCADE)
     
     def __str__(self):
         return f"{self.attribute.name}: {self.value}"
