@@ -1,0 +1,26 @@
+# Python and Django-related
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+
+# Virtual Environment
+venv/
+env/
+*.env
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+
+# Static and media files
+staticfiles/
+media/
+
+# Migrations
+*/migrations/
+
+# Compiled and cache files
+*.pyc
+.DS_Store

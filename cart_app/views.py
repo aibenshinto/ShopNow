@@ -3,7 +3,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
-from .models import Product, Variant, Cart, CartItem
+from .models import Cart, CartItem
+from product_app.models import Product, ProductVariant  # Importing models from product_app
 from django.contrib.auth.models import User
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -23,7 +24,7 @@ def add_to_cart(request):
 
             # Validate product and variant
             product = get_object_or_404(Product, id=product_id)
-            variant = Variant.objects.filter(id=variant_id).first() if variant_id else None
+            variant = ProductVariant.objects.filter(id=variant_id).first() if variant_id else None
 
             # Get or create the cart for the user or session
             if user_id:
@@ -34,10 +35,12 @@ def add_to_cart(request):
             else:
                 return JsonResponse({"error": "User or session ID is required."}, status=400)
 
-            # Check stock
-            stock = variant.stock if variant else product.stock
-            if quantity > stock:
-                return JsonResponse({"error": "Insufficient stock."}, status=400)
+            # Validate stock before adding item to cart
+            if variant:
+                if variant.stock < quantity:
+                    return JsonResponse({"error": "Insufficient stock for variant."}, status=400)
+            elif product.stock < quantity:
+                return JsonResponse({"error": "Insufficient stock for product."}, status=400)
 
             # Add or update item in the cart
             cart_item, created = CartItem.objects.get_or_create(
@@ -49,7 +52,7 @@ def add_to_cart(request):
 
             if not created:
                 cart_item.quantity += quantity
-                if cart_item.quantity > stock:
+                if cart_item.quantity > (variant.stock if variant else product.stock):
                     return JsonResponse({"error": "Exceeds available stock."}, status=400)
                 cart_item.save()
 
@@ -58,13 +61,14 @@ def add_to_cart(request):
                 "cart_item": {
                     "id": cart_item.id,
                     "product": cart_item.product.name,
-                    "variant": cart_item.variant.name if cart_item.variant else None,
+                    "variant": cart_item.variant.sku if cart_item.variant else None,
                     "quantity": cart_item.quantity
                 }
             })
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
     return JsonResponse({"error": "Invalid request method."}, status=405)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 def checkout(request):
@@ -90,13 +94,14 @@ def checkout(request):
             # Calculate total price and validate stock
             total_price = 0
             for item in cart.items.all():
-                stock = item.variant.stock if item.variant else item.product.stock
-                if item.quantity > stock:
+                # Check stock before checkout
+                if not item.is_in_stock():
                     return JsonResponse({
                         "error": f"Insufficient stock for {item.product.name}."
                     }, status=400)
 
-                price = item.variant.price if item.variant else item.product.price
+                # Get price and calculate total price
+                price = item.get_price()
                 total_price += price * item.quantity
 
                 # Deduct stock
@@ -118,9 +123,6 @@ def checkout(request):
             return JsonResponse({"error": str(e)}, status=400)
     return JsonResponse({"error": "Invalid request method."}, status=405)
 
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
-from .models import Cart, CartItem, User
 
 @method_decorator(csrf_exempt, name='dispatch')
 def view_cart(request, user_id=None, session_id=None):
@@ -142,9 +144,9 @@ def view_cart(request, user_id=None, session_id=None):
             items = [
                 {
                     "product": item.product.name,
-                    "variant": item.variant.name if item.variant else None,
+                    "variant": item.variant.sku if item.variant else None,
                     "quantity": item.quantity,
-                    "price": item.variant.price if item.variant else item.product.price,
+                    "price": item.get_price(),  # Use the get_price method for the price
                 }
                 for item in cart_items
             ]
