@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Customer</title>
+    <style>
+        table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        td, th {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+     
+    </style>
+</head>
+<body>
+    <h1>Customer Registration</h1>
+
+    {% load socialaccount %}
+
+    <h2>Google login</h2>
+    <a href="{% provider_login_url 'google' %}?next=/">Login with Google</a>
+
+    <form method="post" action="{% url 'register_customer' %}">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <th scope="col"><label for="username">Username:</label></th>
+                <td><input type="text" id="username" name="user.username" required></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="password">Password:</label></th>
+                <td><input type="password" id="password" name="user.password" required></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="customer_name">Name:</label></th>
+                <td><input type="text" id="customer_name" name="customer_name" required></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="customer_phone">Phone:</label></th>
+                <td><input type="text" id="customer_phone" name="customer_phone" required></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="customer_email">Email:</label></th>
+                <td><input type="email" id="customer_email" name="customer_email" required></td>
+            </tr>
+            <tr>
+                <th scope="col"><label for="customer_address">Address:</label></th>
+                <td><textarea id="customer_address" name="customer_address" required></textarea></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: center;">
+                    <button type="submit">Register</button>
+                </td>
+            </tr>
+
+
+        </table>
+    </form>
+
+</a>
+</body>
+</html>
