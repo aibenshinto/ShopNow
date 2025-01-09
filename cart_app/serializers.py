@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from product_app.models import Product, ProductVariant  # Import from the product_app
-from .models import Cart, CartItem
+from .models import Cart, CartItem,ShippingAddress
 
 class ProductVariantSerializer(serializers.ModelSerializer):
     """
@@ -32,3 +32,16 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ['id', 'user', 'session_id', 'created_at', 'updated_at', 'items']
+
+class ShippingAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShippingAddress
+        fields = [
+            'id',
+            'address_line_1',
+            'address_line_2',
+            'city',
+            'state',
+            'postal_code',
+            'country',
+        ]

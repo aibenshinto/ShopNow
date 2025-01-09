@@ -3,10 +3,11 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
-from .models import Cart, CartItem
+from .models import Cart, CartItem,ShippingAddress
 from product_app.models import Product, ProductVariant  # Importing models from product_app
 from django.contrib.auth.models import User
-
+import uuid
+from .serializers import ShippingAddressSerializer
 @method_decorator(csrf_exempt, name='dispatch')
 def add_to_cart(request):
     """
@@ -15,7 +16,10 @@ def add_to_cart(request):
     """
     if request.method == "POST":
         try:
+            # Parse the request body
             data = json.loads(request.body)
+
+            # Extract session_id and user_id from the request body
             session_id = data.get("session_id", None)
             user_id = data.get("user", None)
             product_id = data.get("product")
@@ -26,14 +30,16 @@ def add_to_cart(request):
             product = get_object_or_404(Product, id=product_id)
             variant = ProductVariant.objects.filter(id=variant_id).first() if variant_id else None
 
-            # Get or create the cart for the user or session
-            if user_id:
-                user = get_object_or_404(User, id=user_id)
-                cart, created = Cart.objects.get_or_create(user=user)
-            elif session_id:
+            # If the user is not logged in, generate a session_id automatically
+            if not user_id:
+                if not session_id:
+                    session_id = str(uuid.uuid4())  # Create a new session ID if not provided
+                # Get or create the cart using session_id for guest users
                 cart, created = Cart.objects.get_or_create(session_id=session_id)
             else:
-                return JsonResponse({"error": "User or session ID is required."}, status=400)
+                # Get or create the cart using user_id for authenticated users
+                user = get_object_or_404(User, id=user_id)
+                cart, created = Cart.objects.get_or_create(user=user)
 
             # Validate stock before adding item to cart
             if variant:
@@ -52,23 +58,30 @@ def add_to_cart(request):
 
             if not created:
                 cart_item.quantity += quantity
+                # Ensure quantity doesn't exceed available stock
                 if cart_item.quantity > (variant.stock if variant else product.stock):
                     return JsonResponse({"error": "Exceeds available stock."}, status=400)
                 cart_item.save()
 
-            return JsonResponse({
+            response = JsonResponse({
                 "message": "Product added to cart.",
                 "cart_item": {
                     "id": cart_item.id,
                     "product": cart_item.product.name,
                     "variant": cart_item.variant.sku if cart_item.variant else None,
                     "quantity": cart_item.quantity
-                }
+                },
+                "session_id": session_id  # Include session ID for guest users
             })
+            response.set_cookie('session_id', session_id, max_age=60*60*24*30, httponly=True)
+
+            return response
+        
+        
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
-    return JsonResponse({"error": "Invalid request method."}, status=405)
 
+    return JsonResponse({"error": "Invalid request method."}, status=405)
 
 @method_decorator(csrf_exempt, name='dispatch')
 def checkout(request):
@@ -155,3 +168,57 @@ def view_cart(request, user_id=None, session_id=None):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
     return JsonResponse({"error": "Invalid request method."}, status=405)
+
+@method_decorator(csrf_exempt, name='dispatch')
+def delete_from_cart(request):
+    """
+    View to delete a cart item.
+    Handles both guest users (session_id) and authenticated users (user_id).
+    """
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+
+            session_id = data.get("session_id", None)
+            user_id = data.get("user", None)
+            product_id = data.get("product")
+            variant_id = data.get("variant", None)
+
+            # Validate that both product_id and either user_id or session_id are provided
+            if not (product_id and (user_id or session_id)):
+                return JsonResponse({"error": "Product ID and either user ID or session ID are required."}, status=400)
+
+            # Get the cart for the user or session
+            if user_id:
+                user = get_object_or_404(User, id=user_id)
+                cart = get_object_or_404(Cart, user=user)
+            elif session_id:
+                cart = get_object_or_404(Cart, session_id=session_id)
+            else:
+                return JsonResponse({"error": "User or session ID is required."}, status=400)
+
+            # Check if variant_id is provided and filter accordingly
+            if variant_id:
+                # Make sure variant_id is an integer if provided
+                try:
+                    variant_id = int(variant_id)
+                except ValueError:
+                    return JsonResponse({"error": "Invalid variant ID."}, status=400)
+
+                # Find the cart item to delete by product and variant
+                cart_item = get_object_or_404(CartItem, cart=cart, product_id=product_id, variant_id=variant_id)
+            else:
+                # Find the cart item to delete by product only (if no variant is provided)
+                cart_item = get_object_or_404(CartItem, cart=cart, product_id=product_id, variant_id__isnull=True)
+
+            # Delete the cart item
+            cart_item.delete()
+
+            return JsonResponse({"message": "Item successfully deleted from cart."})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    return JsonResponse({"error": "Invalid request method."}, status=405)
+
+

@@ -43,3 +43,15 @@ class CartItem(models.Model):
         if self.variant:
             return self.variant.stock >= self.quantity  # Check variant stock
         return self.product.stock >= self.quantity  # Check product stock
+
+class ShippingAddress(models.Model):
+    cart = models.OneToOneField(Cart, on_delete=models.CASCADE, related_name="shipping_address")
+    address_line_1 = models.CharField(max_length=255)
+    address_line_2 = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.address_line_1}, {self.city}, {self.state}, {self.country}"

@@ -46,10 +46,14 @@ class AttributeValue(models.Model):
 class ProductVariant(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     sku = models.CharField(max_length=255, unique=True)
+    description = models.TextField(null=True)
     image = models.ImageField(upload_to='product_variant_images/', null=True, blank=True)
+    price = models.IntegerField(null=True)
+    stock = models.IntegerField(null=True)
     def __str__(self):
         return f"{self.product.name} - {self.sku}"
     
+
 class ProductVariantAttribute(models.Model):
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE)
     attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)

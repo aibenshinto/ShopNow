@@ -11,6 +11,7 @@ urlpatterns = [
     # View Cart
      path('view-cart/<int:user_id>/', views.view_cart, name='view_cart'),  # For authenticated users
     path('view-cart/<str:session_id>/', views.view_cart, name='view_cart_guest'),  # For guest users
- 
-
+    path('cart/delete/', views.delete_from_cart, name='delete_from_cart'),
 ]
+     
+
