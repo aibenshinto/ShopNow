@@ -7,7 +7,10 @@ from .models import Cart, CartItem,ShippingAddress
 from product_app.models import Product, ProductVariant  # Importing models from product_app
 from django.contrib.auth.models import User
 import uuid
-from .serializers import ShippingAddressSerializer
+from rest_framework.views import APIView
+from django.views import View  
+from shippinaddress.models import AddressBook
+
 @method_decorator(csrf_exempt, name='dispatch')
 def add_to_cart(request):
     """
@@ -87,6 +90,7 @@ def add_to_cart(request):
 def checkout(request):
     """
     View to handle checkout for a cart.
+    Includes the user's address ID in the request body.
     Clears the cart after successfully processing the checkout.
     """
     if request.method == "POST":
@@ -94,6 +98,7 @@ def checkout(request):
             data = json.loads(request.body)
             session_id = data.get("session_id", None)
             user_id = data.get("user", None)
+            address_id = data.get("address_id", None)  # Get the address_id from the request body
 
             # Get the cart for the user or session
             if user_id:
@@ -103,6 +108,12 @@ def checkout(request):
                 cart = get_object_or_404(Cart, session_id=session_id)
             else:
                 return JsonResponse({"error": "User or session ID is required."}, status=400)
+
+            # Validate the address_id if provided
+            if address_id:
+                address = get_object_or_404(AddressBook, id=address_id, user=user)
+            else:
+                return JsonResponse({"error": "Address ID is required."}, status=400)
 
             # Calculate total price and validate stock
             total_price = 0
@@ -128,12 +139,23 @@ def checkout(request):
             # Clear the cart after checkout
             cart.items.all().delete()
 
+            # You can also add the address information to the response or create an order with the address
             return JsonResponse({
                 "message": "Checkout successful.",
                 "total_price": total_price,
+                "address": {
+                    "address_line1": address.address_line1,
+                    "address_line2": address.address_line2,
+                    "city": address.city,
+                    "state": address.state,
+                    "postal_code": address.postal_code,
+                    "country": address.country,
+                    "phone_number": address.phone_number,
+                },
             })
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
+
     return JsonResponse({"error": "Invalid request method."}, status=405)
 
 
@@ -222,3 +244,111 @@ def delete_from_cart(request):
     return JsonResponse({"error": "Invalid request method."}, status=405)
 
 
+# @method_decorator(csrf_exempt, name='dispatch')
+# class AddShippingAddressView(View):
+#     """
+#     View to add a shipping address for a user or guest session.
+#     """
+#     def get(self, request, *args, **kwargs):
+#         try:
+#             data = json.loads(request.body)
+
+#             session_id = data.get("session_id", None)
+#             user_id = data.get("user", None)
+#             address_line_1 = data.get("address_line_1")
+#             address_line_2 = data.get("address_line_2", None)
+#             city = data.get("city")
+#             state = data.get("state")
+#             postal_code = data.get("postal_code")
+#             country = data.get("country")
+
+#             # Validate the required fields
+#             if not (address_line_1 and city and state and postal_code and country):
+#                 return JsonResponse({"error": "All address fields are required."}, status=400)
+
+#             if user_id:
+#                 user = get_object_or_404(User, id=user_id)
+#                 cart = get_object_or_404(Cart, user=user)
+#             elif session_id:
+#                 cart = get_object_or_404(Cart, session_id=session_id)
+#             else:
+#                 return JsonResponse({"error": "User or session ID is required."}, status=400)
+
+#             # Create the shipping address for the cart
+#             shipping_address = ShippingAddress.objects.create(
+#                 cart=cart,
+#                 address_line_1=address_line_1,
+#                 address_line_2=address_line_2,
+#                 city=city,
+#                 state=state,
+#                 postal_code=postal_code,
+#                 country=country
+#             )
+
+#             return JsonResponse({"message": "Shipping address added successfully."}, status=201)
+
+#         except KeyError as e:
+#             return JsonResponse({"error": f"Missing key: {str(e)}"}, status=400)
+#         except Exception as e:
+#             return JsonResponse({"error": str(e)}, status=400)
+
+
+
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+def create_shipping_address(request):
+    """
+    View to create a shipping address for a user or guest session.
+    """
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+
+            session_id = data.get("session_id", None)
+            user_id = data.get("user", None)
+            address_line_1 = data.get("address_line_1")
+            address_line_2 = data.get("address_line_2", None)
+            city = data.get("city")
+            state = data.get("state")
+            postal_code = data.get("postal_code")
+            country = data.get("country")
+
+            # Validate the required fields
+            if not (address_line_1 and city and state and postal_code and country):
+                return JsonResponse({"error": "All address fields are required."}, status=400)
+
+            if user_id:
+                user = get_object_or_404(User, id=user_id)
+                cart = get_object_or_404(Cart, user=user)
+            elif session_id:
+                cart = get_object_or_404(Cart, session_id=session_id)
+            else:
+                return JsonResponse({"error": "User or session ID is required."}, status=400)
+
+            # Create the shipping address for the cart
+            shipping_address = ShippingAddress.objects.create(
+                cart=cart,
+                address_line_1=address_line_1,
+                address_line_2=address_line_2,
+                city=city,
+                state=state,
+                postal_code=postal_code,
+                country=country
+            )
+
+            return JsonResponse({"message": "Shipping address added successfully."}, status=201)
+
+        except KeyError as e:
+            return JsonResponse({"error": f"Missing key: {str(e)}"}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    return JsonResponse({"error": "Invalid request method."}, status=405)
+
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TestView(View):
+    def post(self, request, *args, **kwargs):
+        return JsonResponse({"message": "Test POST method works!"}, status=200)
