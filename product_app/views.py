@@ -11,9 +11,17 @@ from rest_framework.exceptions import PermissionDenied
 from authentication_app.models import Vendor
 
 # Product API
+
 class ProductAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     def get(self, request):
+        print("User:", request.user)
+        print(request.auth)
+        print(request.headers)
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication required."}, status=status.HTTP_403_FORBIDDEN)
+        if not hasattr(request.user, 'vendor') and not request.user.is_staff:
+            return Response({"detail": "Only vendors or admins can access this."}, status=status.HTTP_403_FORBIDDEN)
         products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)

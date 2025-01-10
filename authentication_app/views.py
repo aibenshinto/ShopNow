@@ -77,7 +77,7 @@ class Login(APIView):
             return Response({"detail": "Password is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         user = authenticate(username=username, password=password)
-        
+        print(user, user.is_authenticated)
         
         if user:
             refresh = RefreshToken.for_user(user)

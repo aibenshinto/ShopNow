@@ -36,7 +36,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-SITE_ID = 3
+SITE_ID = 4
 # Application definition
 
 INSTALLED_APPS = [
@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     'cart_app',
     'reviews',
     'shippinaddress',
-
+    'rest_framework_simplejwt',
 ]
 
 SOCIAL_ACCOUNT_PROVIDERS ={
@@ -82,14 +82,16 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
+    
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware', 
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'shopnow_project.urls'
@@ -172,7 +174,7 @@ AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend' # Default auth backend
 )
 
-
+# AUTH_USER_MODEL = 'authentication_app.User'
 
 LOGIN_REDIRECT_URL = '/' 
 LOGOUT_REDIRECT_URL = '/'
