@@ -1,7 +1,11 @@
 from django.contrib import admin
-from .models import  Product, Attribute, AttributeValue, ProductVariant, ProductVariantAttribute
+from .models import  Product, Attribute, AttributeValue, ProductVariant, ProductVariantAttribute,Category
 
-
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'category')  # Columns to display in the admin list view
+    search_fields = ('category',)     # Add a search box for the category field
+    list_per_page = 25                # Paginate results, 25 per page
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'created_by')
