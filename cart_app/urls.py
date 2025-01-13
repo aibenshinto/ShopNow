@@ -9,7 +9,7 @@ urlpatterns = [
     path('api/checkout/', views.checkout, name='checkout'),
 
     # View Cart
-    path('view-cart/<int:user_id>/', views.view_cart, name='view_cart'),  # For authenticated users
+    path('view_cart/<int:customer_id>/', views.view_cart, name='view_cart_customer'),
     path('view-cart/<str:session_id>/', views.view_cart, name='view_cart_guest'),  # For guest users
     path('cart/delete/', views.delete_from_cart, name='delete_from_cart'),
 #   path('shipping-address/', AddShippingAddressView.as_view(), name='add_shipping_address'),

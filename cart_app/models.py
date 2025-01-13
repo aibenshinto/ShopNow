@@ -1,19 +1,19 @@
 from django.db import models
-from django.contrib.auth.models import User
+from authentication_app.models import Customer  # Import the Customer model
 from product_app.models import Product, ProductVariant  # Importing from product_app
 
 class Cart(models.Model):
     """
-    Model to represent shopping carts for both authenticated users and guest users.
+    Model to represent shopping carts for both authenticated customers and guest users.
     """
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)  # For logged-in users
+    customer = models.OneToOneField(Customer, on_delete=models.CASCADE, null=True, blank=True)  # For authenticated customers
     session_id = models.CharField(max_length=255, null=True, blank=True)  # For guest users
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        if self.user:
-            return f"Cart for {self.user.username}"
+        if self.customer:
+            return f"Cart for {self.customer.customer_name}"
         return f"Cart for session: {self.session_id}"
 
 class CartItem(models.Model):
