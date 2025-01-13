@@ -11,5 +11,4 @@ urlpatterns = [
     path('profile/vendor/', UpdateVendorProfileView.as_view(), name='update_vendor_profile'),
     path('profile/customer/', UpdateCustomerProfile.as_view(), name='update_customer_profile'),
     path('logout/', LogoutView.as_view(), name='logout'),
-  
 ]

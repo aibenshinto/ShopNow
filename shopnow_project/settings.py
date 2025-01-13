@@ -36,7 +36,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-SITE_ID = 2
+SITE_ID = 3 
 # Application definition
 
 INSTALLED_APPS = [
@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'django_filters',
     'order',
     'cart_app',
+    'vendor',
 
 ]
 
@@ -78,7 +79,11 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
-
+from datetime import timedelta
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+# }
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -189,6 +194,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
 }
+
+
 
 # Example for Gmail (SMTP)
 # In development, use Console backend to print emails to the terminal

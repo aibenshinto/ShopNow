@@ -62,6 +62,8 @@ class RegisterCustomer(APIView):
             Customer.objects.create(user=user, **serializer.validated_data)
             return redirect('login')  # Redirect to the login page after successful registration
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
 class Login(APIView):
     def get(self, request):
         # Render the customer registration form

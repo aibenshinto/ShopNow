@@ -15,25 +15,6 @@ static/
 
 # Virtual environment
 env/
-<<<<<<< HEAD
-.env 
-*.local_env
-*.pyd
-*.pyd.*
-*.pyc
-*.pyo
-*~ 
-.vscode/
-*.log
-*.pot
-*.pyc
-*.pyo
-*.so
-*.sqlite3-journal
-
-sampleapp/
-=======
 
 # Environment variables file
 .env
->>>>>>> bb0d76109a5f33ca3b4fd50426a57443e9155555
