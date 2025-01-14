@@ -8,7 +8,6 @@ from django.contrib.auth import authenticate, login
 from .models import Vendor, Customer
 from .serializers import VendorSerializer, CustomerSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
-
 from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth import login
@@ -62,6 +61,8 @@ class RegisterCustomer(APIView):
             Customer.objects.create(user=user, **serializer.validated_data)
             return redirect('login')  # Redirect to the login page after successful registration
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
 class Login(APIView):
     def get(self, request):
         # Render the customer registration form
@@ -77,7 +78,7 @@ class Login(APIView):
             return Response({"detail": "Password is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         user = authenticate(username=username, password=password)
-        
+        print(user, user.is_authenticated)
         
         if user:
             refresh = RefreshToken.for_user(user)

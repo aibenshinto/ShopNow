@@ -26,3 +26,4 @@ class ProductVariantAttributeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductVariantAttribute
         fields = '__all__'
+        read_only_fields = ['created_by']
