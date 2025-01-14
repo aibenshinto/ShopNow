@@ -1,27 +1,33 @@
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-import json
 from .models import Cart, CartItem
 from product_app.models import Product, ProductVariant
-from authentication_app.models import Customer  # Importing the Customer model
+from authentication_app.models import Customer
 from shippinaddress.models import AddressBook
-import uuid
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
-@method_decorator(csrf_exempt, name='dispatch')
-def add_to_cart(request):
+
+
+
+class AddToCartView(APIView):
     """
-    View to add items to the cart.
-    Handles both guest users (session_id) and authenticated users (customer_id).
+    View to add items to the cart. Requires authentication.
     """
-    if request.method == "POST":
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
         try:
-            # Parse the request body
-            data = json.loads(request.body)
+            data = request.data
+            # Ensure we retrieve the Customer instance
+            try:
+                customer = Customer.objects.get(user=request.user)
+            except Customer.DoesNotExist:
+                return Response({"error": "Customer not found."}, status=status.HTTP_400_BAD_REQUEST)
 
-            session_id = data.get("session_id", None)
-            customer_id = data.get("customer", None)
             product_id = data.get("product")
             variant_id = data.get("variant", None)
             quantity = data.get("quantity", 1)
@@ -30,21 +36,15 @@ def add_to_cart(request):
             product = get_object_or_404(Product, id=product_id)
             variant = ProductVariant.objects.filter(id=variant_id).first() if variant_id else None
 
-            # Handle guest or authenticated user cart
-            if customer_id:
-                customer = get_object_or_404(Customer, id=customer_id)
-                cart, created = Cart.objects.get_or_create(customer=customer)
-            else:
-                if not session_id:
-                    session_id = str(uuid.uuid4())  # Create a new session ID if not provided
-                cart, created = Cart.objects.get_or_create(session_id=session_id)
+            # Get or create the cart for the authenticated customer
+            cart, created = Cart.objects.get_or_create(customer=customer)
 
             # Validate stock
             if variant:
                 if variant.stock < quantity:
-                    return JsonResponse({"error": "Insufficient stock for variant."}, status=400)
+                    return Response({"error": "Insufficient stock for variant."}, status=status.HTTP_400_BAD_REQUEST)
             elif product.stock < quantity:
-                return JsonResponse({"error": "Insufficient stock for product."}, status=400)
+                return Response({"error": "Insufficient stock for product."}, status=status.HTTP_400_BAD_REQUEST)
 
             # Add or update item in the cart
             cart_item, created = CartItem.objects.get_or_create(
@@ -57,64 +57,50 @@ def add_to_cart(request):
             if not created:
                 cart_item.quantity += quantity
                 if cart_item.quantity > (variant.stock if variant else product.stock):
-                    return JsonResponse({"error": "Exceeds available stock."}, status=400)
+                    return Response({"error": "Exceeds available stock."}, status=status.HTTP_400_BAD_REQUEST)
                 cart_item.save()
 
-            response = JsonResponse({
+            return Response({
                 "message": "Product added to cart.",
                 "cart_item": {
                     "id": cart_item.id,
                     "product": cart_item.product.name,
                     "variant": cart_item.variant.sku if cart_item.variant else None,
                     "quantity": cart_item.quantity
-                },
-                "session_id": session_id  # Include session ID for guest users
+                }
             })
-            response.set_cookie('session_id', session_id, max_age=60*60*24*30, httponly=True)
-
-            return response
 
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    return JsonResponse({"error": "Invalid request method."}, status=405)
 
-@method_decorator(csrf_exempt, name='dispatch')
-def checkout(request):
+
+class CheckoutView(APIView):
     """
-    View to handle checkout for a cart.
-    Includes the user's address ID in the request body.
-    Clears the cart after successfully processing the checkout.
+    View to handle checkout for a cart. Requires authentication.
     """
-    if request.method == "POST":
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
         try:
-            data = json.loads(request.body)
-            session_id = data.get("session_id", None)
-            customer_id = data.get("customer", None)
-            address_id = data.get("address_id", None)
+            data = request.data
+            customer = request.user
+            address_id = data.get("address_id")
 
-            # Get the cart for the customer or session
-            if customer_id:
-                customer = get_object_or_404(Customer, id=customer_id)
-                cart = get_object_or_404(Cart, customer=customer)
-            elif session_id:
-                cart = get_object_or_404(Cart, session_id=session_id)
-            else:
-                return JsonResponse({"error": "Customer or session ID is required."}, status=400)
+            # Get the cart for the authenticated user
+            cart = get_object_or_404(Cart, customer=customer)
 
             # Validate the address
-            if address_id:
-                address = get_object_or_404(AddressBook, id=address_id, customer=customer)
-            else:
-                return JsonResponse({"error": "Address ID is required."}, status=400)
+            address = get_object_or_404(AddressBook, id=address_id, customer=customer)
 
             # Calculate total price and validate stock
             total_price = 0
             for item in cart.items.all():
                 if not item.is_in_stock():
-                    return JsonResponse({
+                    return Response({
                         "error": f"Insufficient stock for {item.product.name}."
-                    }, status=400)
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 price = item.get_price()
                 total_price += price * item.quantity
@@ -130,7 +116,7 @@ def checkout(request):
             # Clear the cart after checkout
             cart.items.all().delete()
 
-            return JsonResponse({
+            return Response({
                 "message": "Checkout successful.",
                 "total_price": total_price,
                 "address": {
@@ -144,74 +130,86 @@ def checkout(request):
                 },
             })
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    return JsonResponse({"error": "Invalid request method."}, status=405)
+class ViewCartView(APIView):
+    """
+    View to display the cart items for an authenticated user.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
-@method_decorator(csrf_exempt, name='dispatch')
-def view_cart(request, customer_id=None, session_id=None):
-    if request.method == "GET":
+    def get(self, request):
         try:
-            if customer_id:
-                customer = get_object_or_404(Customer, id=customer_id)
-                cart = get_object_or_404(Cart, customer=customer)
-            elif session_id:
-                cart = get_object_or_404(Cart, session_id=session_id)
-            else:
-                return JsonResponse({"error": "Customer or session ID is required."}, status=400)
+            # Ensure we retrieve the Customer instance
+            try:
+                customer = Customer.objects.get(user=request.user)
+            except Customer.DoesNotExist:
+                return Response({"error": "Customer not found."}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Retrieve the cart for the authenticated customer
+            cart = get_object_or_404(Cart, customer=customer)
+
+            # Fetch all cart items
             cart_items = cart.items.all()
-            items = [
-                {
+            items = []
+            total_price = 0  # Initialize total price
+
+            for item in cart_items:
+                # Calculate total price for the current item
+                item_total_price = item.get_price() * item.quantity
+                items.append({
                     "product": item.product.name,
                     "variant": item.variant.sku if item.variant else None,
                     "quantity": item.quantity,
-                    "price": item.get_price(),
-                }
-                for item in cart_items
-            ]
-            return JsonResponse({"cart_items": items})
+                    "unit_price": item.get_price(),
+                    "total_price": item_total_price,
+                })
+                total_price += item_total_price  # Accumulate the total price
+
+            return Response({
+                "cart_items": items,
+                "total_price": total_price
+            })
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
-    return JsonResponse({"error": "Invalid request method."}, status=405)
+            # Handle and log errors
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-def delete_from_cart(request):
+class DeleteFromCartView(APIView):
     """
-    View to delete a cart item.
-    Handles both guest users (session_id) and authenticated users (customer_id).
+    View to delete a cart item. Requires authentication.
     """
-    if request.method == "POST":
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
         try:
-            data = json.loads(request.body)
+            data = request.data
 
-            session_id = data.get("session_id", None)
-            customer_id = data.get("customer", None)
+            # Ensure we retrieve the Customer instance
+            try:
+                customer = Customer.objects.get(user=request.user)
+            except Customer.DoesNotExist:
+                return Response({"error": "Customer not found."}, status=status.HTTP_400_BAD_REQUEST)
+
             product_id = data.get("product")
             variant_id = data.get("variant", None)
 
-            if not (product_id and (customer_id or session_id)):
-                return JsonResponse({"error": "Product ID and either customer ID or session ID are required."}, status=400)
+            # Retrieve the cart for the authenticated customer
+            cart = get_object_or_404(Cart, customer=customer)
 
-            if customer_id:
-                customer = get_object_or_404(Customer, id=customer_id)
-                cart = get_object_or_404(Cart, customer=customer)
-            elif session_id:
-                cart = get_object_or_404(Cart, session_id=session_id)
-            else:
-                return JsonResponse({"error": "Customer or session ID is required."}, status=400)
-
+            # Retrieve the cart item based on the product and optional variant
             if variant_id:
                 cart_item = get_object_or_404(CartItem, cart=cart, product_id=product_id, variant_id=variant_id)
             else:
                 cart_item = get_object_or_404(CartItem, cart=cart, product_id=product_id, variant_id__isnull=True)
 
+            # Delete the cart item
             cart_item.delete()
 
-            return JsonResponse({"message": "Item successfully deleted from cart."})
+            return Response({"message": "Item successfully deleted from cart."})
 
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    return JsonResponse({"error": "Invalid request method."}, status=405)
