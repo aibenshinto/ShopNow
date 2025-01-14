@@ -132,10 +132,42 @@ class CreateOrderView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def send_order_notification(self, order):
-        subject = f"New Order: {order.order_id}"
+        subject = f"🎉 New Order: {order.order_id} 🎉"
         
-        customer_message = f"Thank you for your order! Your order ID is {order.order_id}."
-        vendor_message = f"New order has been placed! Order ID: {order.order_id}, Total: {order.total_price}"
+        customer_message = f"""
+        🎉 **Thank You for Your Order, {order.user}!** 🎉
+
+        We’re excited to let you know that your order has been successfully placed. 🛍️
+
+        **Order ID**: {order.order_id}  
+        **Total Price**: ${order.total_price}
+
+        You’ll receive an update once your order is on its way! 🚚
+
+        Thank you for choosing us — we can’t wait to serve you again! 💖
+
+        If you have any questions, feel free to reach out to us anytime.
+
+        Warm regards,  
+        The [Your Store Name] Team
+        """
+        vendor_message = f"""
+        🚨 **New Order Alert!** 🚨
+
+        A new order has been placed! 🛒
+
+        **Order ID**: {order.order_id}  
+        **Customer**: {order.user}  
+        **Total Price**: ${order.total_price}  
+        **Status**: Pending
+
+        Please process this order as soon as possible and ensure timely delivery. 🚚
+
+        Thanks for your great work in making our customers happy!
+
+        Best,  
+        The MultiVendor Team
+        """
 
         # Notify the customer
         try:
