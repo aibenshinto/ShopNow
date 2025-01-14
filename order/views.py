@@ -1,17 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from .models import Order, OrderItem
-from .serializers import OrderSerializer
 from django.contrib.auth.models import User
-
-from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
+import logging
 from .models import Order, OrderItem
 from .serializers import OrderSerializer
 from django.core.mail import send_mail
@@ -22,7 +14,6 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import ORDER_STATUS_CHOICES
 from rest_framework.permissions import AllowAny
 from django.db.models import Sum
-
 from rest_framework.permissions import IsAuthenticated
 from django.core.exceptions import PermissionDenied
 
@@ -81,7 +72,7 @@ from django.core.exceptions import PermissionDenied
 #                 [order.vendor_email],
 #             )
 
-import logging
+
 
 class CreateOrderView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -159,7 +150,7 @@ class CreateOrderView(APIView):
         **Order ID**: {order.order_id}  
         **Customer**: {order.user}  
         **Total Price**: ${order.total_price}  
-        **Status**: Pending
+        **Status**: Processing
 
         Please process this order as soon as possible and ensure timely delivery. 🚚
 

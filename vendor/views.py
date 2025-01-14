@@ -12,9 +12,6 @@ from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Category
 from .serializers import CategorySerializer
-from authentication_app.models import Vendor
-
-
 
 
 
