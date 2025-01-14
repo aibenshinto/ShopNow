@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'authentication_app',
+    'admin_panel',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'social_django',
@@ -60,9 +61,14 @@ INSTALLED_APPS = [
     'django_filters',
     'order',
     'cart_app',
+<<<<<<< HEAD
     'reviews',
     'shippinaddress',
     'rest_framework_simplejwt',
+=======
+    'vendor',
+    'shippinaddress',
+>>>>>>> 088fd83c1a22ee0c7329756b6547b95e63685e74
 ]
 
 SOCIAL_ACCOUNT_PROVIDERS ={
@@ -75,16 +81,26 @@ SOCIAL_ACCOUNT_PROVIDERS ={
         'OAUTH_PKCE_ENABLED': True,
     }
 }
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+
+         
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+from datetime import timedelta
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+# }
 MIDDLEWARE = [
     
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware', 
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -195,6 +211,8 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
+
+
 # Example for Gmail (SMTP)
 # In development, use Console backend to print emails to the terminal
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -203,3 +221,4 @@ EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'dairyhubservices@gmail.com'
 EMAIL_HOST_PASSWORD = 'yhwxpetbusuitgag'
+
