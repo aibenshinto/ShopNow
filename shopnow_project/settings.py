@@ -36,7 +36,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-SITE_ID = 3 
+SITE_ID = 3
 # Application definition
 
 INSTALLED_APPS = [
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'authentication_app',
+    'admin_panel',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'social_django',
@@ -61,7 +62,7 @@ INSTALLED_APPS = [
     'order',
     'cart_app',
     'vendor',
-
+    'shippinaddress',
 ]
 
 SOCIAL_ACCOUNT_PROVIDERS ={
@@ -74,10 +75,16 @@ SOCIAL_ACCOUNT_PROVIDERS ={
         'OAUTH_PKCE_ENABLED': True,
     }
 }
+
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+
+         
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 from datetime import timedelta
 # SIMPLE_JWT = {
@@ -86,7 +93,7 @@ from datetime import timedelta
 # }
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -205,3 +212,4 @@ EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'dairyhubservices@gmail.com'
 EMAIL_HOST_PASSWORD = 'yhwxpetbusuitgag'
+

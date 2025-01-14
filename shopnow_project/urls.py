@@ -11,6 +11,12 @@ urlpatterns = [
     path('orders/', include('order.urls')), 
     path('vendor/', include('vendor.urls')),
     path('', include('cart_app.urls')),  # Replace 'your_app_name' with your app's name
+    path('', include('admin_panel.urls')),
+    path('accounts/', include('allauth.urls')),
+    path('product_app/',include('product_app.urls')),
+    path('', include('order.urls')),  # Include the orders app URLs
+    path('', include('cart_app.urls')),  # Replace 'your_app_name' with your app's name
+    path('api/', include('shippinaddress.urls')),
     path('favicon.ico', serve, {'path': 'favicon.ico'}),  # Serve favicon.ico as static
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

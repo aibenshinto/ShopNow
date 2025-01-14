@@ -9,6 +9,7 @@ class Vendor(models.Model):
     vendor_address = models.TextField()
     store_name = models.CharField(max_length=100)
     store_address = models.TextField()
+    
 
     def __str__(self):
         return self.store_name
