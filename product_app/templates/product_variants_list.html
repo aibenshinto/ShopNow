@@ -75,8 +75,10 @@
     <div class="card-container">
         {% for data in product_variants %}
             <div class="card">
+                <p>Vendor: {{ data.variant.created_by.vendor_name }}</p>
                 <!-- Product Image -->
-                <img src="{{ data.variant.image.url }}" alt="Product Image" onerror="this.src='https://via.placeholder.com/300x200';">
+                <img src="{{ data.variant.image.url }}" alt="Product Image">
+               
 
                 <!-- Card Content -->
                 <div class="card-content">

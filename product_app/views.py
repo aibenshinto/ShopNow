@@ -11,6 +11,7 @@ from rest_framework.exceptions import PermissionDenied
 from authentication_app.models import Vendor
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import render
+from django.db.models import Q
 # Product API
 
 class ProductAPIView(APIView):
@@ -136,10 +137,8 @@ class ProductVariantAttributeAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProductVariantAttributeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     authentication_classes = [JWTAuthentication]
-    filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ['variant__product', 'attribute', 'value']  # Fields to filter by
-    search_fields = ['variant__product__name', 'attribute__name', 'value__value']  # Fields to search by
-
+    
+    
     def get_queryset(self):
         if self.request.user.is_authenticated:
             if hasattr(self.request.user, 'vendor_profile'):
@@ -174,17 +173,56 @@ def product_variants_list(request):
     # Fetch all product variants
     product_variants = ProductVariant.objects.all()
 
-    # Create a dictionary to store attributes for each product variant
+    # Create a dictionary to store attributes and vendor name for each product variant
     product_variant_data = []
 
     for variant in product_variants:
+        # Fetch the attributes for each product variant
         attributes = ProductVariantAttribute.objects.filter(variant=variant)
+
+        # Corrected vendor_name, directly referencing variant.created_by
+        vendor_name = variant.created_by if variant.created_by else "No Vendor"
+        
+        # Append product variant data along with vendor name
         product_variant_data.append({
             "variant": variant,
-            "attributes": attributes
+            "attributes": attributes,
+            "vendor_name": vendor_name
         })
 
     context = {
         "product_variants": product_variant_data
     }
     return render(request, "product_variants_list.html", context)
+
+class ProductVariantAttributeSearchAPIView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, *args, **kwargs):
+        # Extract filter and search criteria from the request body
+        filters = request.data.get('filters', {})  # Filters to apply
+        search_query = request.data.get('search', '')  # Search query
+
+        queryset = ProductVariantAttribute.objects.all()
+
+        # Apply filters if provided
+        if filters:
+            filter_conditions = Q()
+            for key, value in filters.items():
+                # Add each filter condition dynamically
+                filter_conditions &= Q(**{key: value})
+            queryset = queryset.filter(filter_conditions)
+
+        # Apply search if provided
+        if search_query:
+            search_conditions = (
+                Q(variant__product__name__icontains=search_query) |
+                Q(attribute__name__icontains=search_query) |
+                Q(value__value__icontains=search_query)
+            )
+            queryset = queryset.filter(search_conditions)
+
+        # Serialize the filtered and searched data
+        serializer = ProductVariantAttributeSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
