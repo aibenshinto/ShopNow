@@ -8,7 +8,6 @@ from django.contrib.auth import authenticate, login
 from .models import Vendor, Customer
 from .serializers import VendorSerializer, CustomerSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
-
 from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth import login
