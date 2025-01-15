@@ -1,12 +1,7 @@
 from django.db import models
 from authentication_app.models import Vendor
-## from Vendor_app.models import Category
+from vendor.models import Category
 
-class Category(models.Model):
-    category = models.CharField(max_length=225)
-
-    def __str__(self):
-        return f"{self.category}"
 class Product(models.Model):
     name = models.CharField(max_length=225)
     created_by = models.ForeignKey(Vendor, on_delete=models.CASCADE)
