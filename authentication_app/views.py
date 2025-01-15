@@ -14,7 +14,7 @@ from django.contrib.auth import login
 from django.http import HttpResponse
 from .models import Vendor, Customer
 from social_django.models import UserSocialAuth
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 # Generate JWT tokens
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -63,8 +63,9 @@ class RegisterCustomer(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class Login(APIView):
     def get(self, request):
-        # Render the customer registration form
+        # Render the login page
         return render(request, 'login.html')
+
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -76,26 +77,27 @@ class Login(APIView):
             return Response({"detail": "Password is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         user = authenticate(username=username, password=password)
-        
-        
+
         if user:
+            # Check if the user is a vendor
+            try:
+                vendor = user.vendor_profile
+                if not vendor.is_approved:
+                    return Response(
+                        {"detail": "Your account is not approved by the admin yet."},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            except Vendor.DoesNotExist:
+                pass  # The user is not a vendor; allow login for other user types
+
             refresh = RefreshToken.for_user(user)
             return Response({
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
             })
 
-        # if user:
-        #     refresh = RefreshToken.for_user(user)
-        #     response_data = {
-        #         'access': str(refresh.access_token),
-        #         'refresh': str(refresh),
-        #     }
-        #     # Store the token in session or redirect as needed
-        #     request.session['access_token'] = response_data['access']
-        #     #return redirect('home')  # Redirect to home page after successful login
-
         return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
     
 
 # Home Page
@@ -107,6 +109,10 @@ class HomePageView(APIView):
         return render(request, 'home.html')
 
 class UpdateVendorProfileView(APIView):
+
+    authentication_classes = [JWTAuthentication]  # Specify JWTAuthentication here
+    permission_classes = [IsAuthenticated]
+
     def put(self, request):
         try:
             # Assuming the vendor is authenticated and identified via request.user
@@ -124,6 +130,10 @@ class UpdateVendorProfileView(APIView):
 
 # Update Customer Profile
 class UpdateCustomerProfile(APIView):
+    authentication_classes = [JWTAuthentication]  # Specify JWTAuthentication here
+    permission_classes = [IsAuthenticated]
+
+    
     def put(self, request):
         try:
             # Assuming the customer is authenticated and identified via request.user

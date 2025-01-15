@@ -7,30 +7,38 @@ from authentication_app.models import Vendor, Customer
 from authentication_app.serializers import VendorSerializer, CustomerSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+CUSTOMER_NOT_FOUND = "Customer not found."
+VENDOR_NOT_FOUND = "Vendor not found."
+UNAUTHORIZED_ACCESS = "Unauthorized access."
+
 class AdminRestrictedView(APIView):
     """
-    Base view for admin-restricted actions. Checks if the username is 'admin'.
+    Base view for admin-restricted actions. Checks if the user is staff.
     """
     authentication_classes = [JWTAuthentication]  # Specify JWTAuthentication here
     permission_classes = [IsAuthenticated]
 
-    def is_admin(self, user):
-        return user.is_authenticated and user.username == "admin"
-
+    def is_staff(self, user):
+        return user.is_authenticated and user.is_staff
+   
 
 # Vendor API View
 class VendorListCreateAPIView(AdminRestrictedView):
+    """
+    API view to list and create vendors. Only approved vendors are listed.
+    """
     def get(self, request):
-        if not self.is_admin(request.user):
-            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+        if not self.is_staff(request.user):
+            return Response({"error": VENDOR_NOT_FOUND}, status=status.HTTP_403_FORBIDDEN)
         
-        vendors = Vendor.objects.all()
-        serializer = VendorSerializer(vendors, many=True)
+        # Filter to include only approved vendors
+        approved_vendors = Vendor.objects.filter(is_approved=True)
+        serializer = VendorSerializer(approved_vendors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        if not self.is_admin(request.user):
-            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+        if not self.is_staff(request.user):
+            return Response({"error": UNAUTHORIZED_ACCESS }, status=status.HTTP_403_FORBIDDEN)
 
         serializer = VendorSerializer(data=request.data)
         if serializer.is_valid():
@@ -38,18 +46,19 @@ class VendorListCreateAPIView(AdminRestrictedView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class CustomerListCreateAPIView(AdminRestrictedView):
     def get(self, request):
-        if not self.is_admin(request.user):
-            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+        if not self.is_staff(request.user):
+            return Response({"error": UNAUTHORIZED_ACCESS}, status=status.HTTP_403_FORBIDDEN)
         
         customers = Customer.objects.all()
         serializer = CustomerSerializer(customers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        if not self.is_admin(request.user):
-            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+        if not self.is_staff(request.user):
+            return Response({"error": UNAUTHORIZED_ACCESS}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = CustomerSerializer(data=request.data)
         if serializer.is_valid():
@@ -60,25 +69,25 @@ class CustomerListCreateAPIView(AdminRestrictedView):
 # Vendor Update API View
 class VendorRetrieveUpdateDestroyAPIView(AdminRestrictedView):
     def get(self, request, pk):
-        if not self.is_admin(request.user):
-            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+        if not self.is_staff(request.user):
+            return Response({"error": UNAUTHORIZED_ACCESS}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             vendor = Vendor.objects.get(pk=pk)
         except Vendor.DoesNotExist:
-            return Response({"error": "Vendor not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": VENDOR_NOT_FOUND }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer =  VendorUpdateSerializer(vendor)
+        serializer = VendorUpdateSerializer(vendor)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        if not self.is_admin(request.user):
-            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+        if not self.is_staff(request.user):
+            return Response({"error": UNAUTHORIZED_ACCESS }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             vendor = Vendor.objects.get(pk=pk)
         except Vendor.DoesNotExist:
-            return Response({"error": "Vendor not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": VENDOR_NOT_FOUND }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = VendorUpdateSerializer(vendor, data=request.data)
         if serializer.is_valid():
@@ -87,40 +96,39 @@ class VendorRetrieveUpdateDestroyAPIView(AdminRestrictedView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        if not self.is_admin(request.user):
-            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+        if not self.is_staff(request.user):
+            return Response({"error": UNAUTHORIZED_ACCESS }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             vendor = Vendor.objects.get(pk=pk)
         except Vendor.DoesNotExist:
-            return Response({"error": "Vendor not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": VENDOR_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
         vendor.delete()
         return Response({"message": "Vendor deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
-
 # Customer Update API View
 class CustomerRetrieveUpdateDestroyAPIView(AdminRestrictedView):
     def get(self, request, pk):
-        if not self.is_admin(request.user):
-            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+        if not self.is_staff(request.user):
+            return Response({"error": UNAUTHORIZED_ACCESS }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             customer = Customer.objects.get(pk=pk)
         except Customer.DoesNotExist:
-            return Response({"error": "Customer not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error":CUSTOMER_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = CustomerUpdateSerializer(customer)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        if not self.is_admin(request.user):
-            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+        if not self.is_staff(request.user):
+            return Response({"error": UNAUTHORIZED_ACCESS }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             customer = Customer.objects.get(pk=pk)
         except Customer.DoesNotExist:
-            return Response({"error": "Customer not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": CUSTOMER_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = CustomerUpdateSerializer(customer, data=request.data)
         if serializer.is_valid():
@@ -129,13 +137,48 @@ class CustomerRetrieveUpdateDestroyAPIView(AdminRestrictedView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        if not self.is_admin(request.user):
-            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+        if not self.is_staff(request.user):
+            return Response({"error": UNAUTHORIZED_ACCESS }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             customer = Customer.objects.get(pk=pk)
         except Customer.DoesNotExist:
-            return Response({"error": "Customer not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": CUSTOMER_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
 
         customer.delete()
         return Response({"message": "Customer deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+class PendingAccountsAPIView(AdminRestrictedView):
+    """
+    API to fetch all pending vendors and customers awaiting approval.
+    """
+    def get(self, request):
+        if not self.is_staff(request.user):
+            return Response({"error": UNAUTHORIZED_ACCESS }, status=status.HTTP_403_FORBIDDEN)
+
+        pending_vendors = Vendor.objects.filter(is_approved=False)
+     
+        vendor_serializer = VendorSerializer(pending_vendors, many=True)
+     
+
+        return Response({
+            "pending_vendors": vendor_serializer.data,
+          
+        }, status=status.HTTP_200_OK)
+
+class ApproveVendorAPIView(AdminRestrictedView):
+    """
+    API to approve a vendor.
+    """
+    def patch(self, request, pk):
+        if not self.is_staff(request.user):
+            return Response({"error": "Unauthorized access."}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            vendor = Vendor.objects.get(pk=pk)
+        except Vendor.DoesNotExist:
+            return Response({"error": VENDOR_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
+
+        vendor.is_approved = True
+        vendor.save()
+        return Response({"message": f"Vendor '{vendor.user}' has been approved."}, status=status.HTTP_200_OK)
+
