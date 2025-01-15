@@ -1,6 +1,6 @@
 from django.db import models
 from authentication_app.models import Vendor
-## from Vendor_app.models import Category
+# from Vendor_app.models import Category
 
 class Category(models.Model):
     category = models.CharField(max_length=225)

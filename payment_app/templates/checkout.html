@@ -72,12 +72,13 @@
     <script type="text/javascript">
         document.getElementById('payButton').onclick = function(e) {
             e.preventDefault();
-
+            const token = localStorage.getItem('access_token');
             // Fetch the order details from the backend API (update the URL with your correct cart ID)
-            fetch('/api/cart/{{ cart_id }}/create-order/', {
+            fetch('/api/create-razorpay-order/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM2OTI2MjEwLCJpYXQiOjE3MzY5MjU5MTAsImp0aSI6IjE2MDUwMDNkMDhhMTQzZTY4NzhmNDAyZjNlYTQyNTcxIiwidXNlcl9pZCI6MX0.35Qw4R_IGBCEayH8SIGyB2VK1dyNluBlB6xFTIQLWaY`,
                 },
                 body: JSON.stringify({
                     // Additional data can go here if required

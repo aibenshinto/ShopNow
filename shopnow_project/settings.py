@@ -63,7 +63,8 @@ INSTALLED_APPS = [
     'cart_app',
 
     'reviews',
-    'shippinaddress',
+    
+    
     'rest_framework_simplejwt',
 
     'vendor',

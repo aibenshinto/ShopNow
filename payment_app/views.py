@@ -57,6 +57,7 @@ def checkout_view(request, cart_id):
     """
     View to render the Razorpay checkout page.
     """
+    
     # Get the cart details by cart_id
     cart = get_object_or_404(Cart, id=cart_id)
     
@@ -158,3 +159,5 @@ class CreateRazorpayOrderAPIView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
