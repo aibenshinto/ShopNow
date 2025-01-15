@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from product_app.models import Product, ProductVariant  # Import from the product_app
-from .models import Cart, CartItem,ShippingAddress
+from product_app.models import Product, ProductVariant
+from .models import Cart, CartItem
+
 
 class ProductVariantSerializer(serializers.ModelSerializer):
     """
@@ -8,40 +9,27 @@ class ProductVariantSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = ProductVariant
-        fields = ['id', 'product', 'sku', 'name', 'price', 'stock', 'created_at', 'updated_at']
+        fields = ['id', 'sku', 'name', 'price', 'stock']
 
 
 class CartItemSerializer(serializers.ModelSerializer):
     """
     Serializer for CartItem model.
     """
-    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())  # Reference Product by ID
-    variant = serializers.PrimaryKeyRelatedField(queryset=ProductVariant.objects.all(), required=False)  # Reference Variant by ID
+    product = serializers.StringRelatedField()  # Display product name
+    variant = ProductVariantSerializer()  # Nested serializer for variant
 
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'variant', 'quantity', 'created_at', 'updated_at']
+        fields = ['id', 'product', 'variant', 'quantity', 'created_at']
 
 
 class CartSerializer(serializers.ModelSerializer):
     """
     Serializer for the Cart model.
     """
-    items = CartItemSerializer(many=True)
+    items = CartItemSerializer(many=True, source='items.all')  # Use related name for CartItem
 
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'session_id', 'created_at', 'updated_at', 'items']
-
-class ShippingAddressSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ShippingAddress
-        fields = [
-            'id',
-            'address_line_1',
-            'address_line_2',
-            'city',
-            'state',
-            'postal_code',
-            'country',
-        ]
+        fields = ['id', 'customer', 'created_at', 'items']
