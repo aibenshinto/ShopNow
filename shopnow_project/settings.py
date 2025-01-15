@@ -62,9 +62,14 @@ INSTALLED_APPS = [
     'order',
     'cart_app',
     'reviews',
-    'shippinaddress',
+    
+    
     'rest_framework_simplejwt',
+
     'vendor',
+    'shippinaddress',
+    'payment_app'
+
 ]
 
 SOCIAL_ACCOUNT_PROVIDERS ={
@@ -218,3 +223,6 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'dairyhubservices@gmail.com'
 EMAIL_HOST_PASSWORD = 'yhwxpetbusuitgag'
 
+
+RAZORPAY_KEY_ID = "rzp_test_jLruu3x4ZBDxbm"
+RAZORPAY_SECRET_KEY = "R9G0kaz4tyUNLYmVb1iekV7L"

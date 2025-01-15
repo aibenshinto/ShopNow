@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        h2 {
+            font-size: 2rem;
+            text-align: center;
+            color: #00bcd4;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.7);
+        }
+        .checkout-container {
+            background: linear-gradient(145deg, #232323, #2f2f2f);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 188, 212, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        .pay-button {
+            background: #00bcd4;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            color: #fff;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+            box-shadow: 0 8px 16px rgba(0, 188, 212, 0.3);
+        }
+        .pay-button:hover {
+            background: #0097a7;
+            transform: translateY(-3px);
+        }
+        .pay-button:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 10px rgba(0, 188, 212, 0.4);
+        }
+        .info-text {
+            color: #aaa;
+            font-size: 1rem;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h2>Checkout</h2>
+    <div class="checkout-container">
+        <button id="payButton" class="pay-button">Pay with Razorpay</button>
+        <p class="info-text">Secure Payment Gateway</p>
+    </div>
+
+    <script type="text/javascript">
+        document.getElementById('payButton').onclick = function(e) {
+            e.preventDefault();
+            const token = localStorage.getItem('access_token');
+            // Fetch the order details from the backend API (update the URL with your correct cart ID)
+            fetch('/api/create-razorpay-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM2OTI2MjEwLCJpYXQiOjE3MzY5MjU5MTAsImp0aSI6IjE2MDUwMDNkMDhhMTQzZTY4NzhmNDAyZjNlYTQyNTcxIiwidXNlcl9pZCI6MX0.35Qw4R_IGBCEayH8SIGyB2VK1dyNluBlB6xFTIQLWaY`,
+                },
+                body: JSON.stringify({
+                    // Additional data can go here if required
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.razorpay_order_id) {
+                    // Define Razorpay checkout options
+                    var options = {
+                        "key": "{{ settings.RAZORPAY_KEY_ID }}",  // Use the Razorpay Key ID from Django settings
+                        "amount": data.total_price * 100,  // Amount in paise (e.g., 200 INR = 20000 paise)
+                        "currency": "INR",
+                        "order_id": data.razorpay_order_id,  // The Razorpay order ID from the backend
+                        "handler": function(response) {
+                            // Handle the payment response
+                            console.log("Payment successful!", response);
+
+                            // Send payment details to your backend for verification
+                            fetch('/api/payment/verify/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature
+                                }),
+                            })
+                            .then(res => res.json())
+                            .then(verificationData => {
+                                if (verificationData.message === "Payment verified successfully.") {
+                                    alert("Payment verified and order confirmed.");
+                                    // Optionally redirect to a confirmation page or order details page
+                                    window.location.href = "/api/order-confirmation/";
+                                } else {
+                                    alert("Payment verification failed.");
+                                }
+                            })
+                            .catch(error => {
+                                console.log('Error verifying payment:', error);
+                            });
+                        },
+                        "prefill": {
+                            "name": "Your Name",  // Dynamically pass user's name if available
+                            "email": "email@example.com"  // Dynamically pass user's email if available
+                        }
+                    };
+
+                    // Open the Razorpay checkout form
+                    var rzp1 = new Razorpay(options);
+                    rzp1.open();
+                } else {
+                    alert("Error: Could not create Razorpay order.");
+                }
+            })
+            .catch(error => {
+                console.log("Error fetching Razorpay order:", error);
+            });
+        };
+    </script>
+</body>
+</html>
