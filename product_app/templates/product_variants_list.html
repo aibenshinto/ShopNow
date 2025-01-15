@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Variants</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            overflow: hidden;
+        }
+
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 1.25em;
+            color: #333;
+        }
+
+        .card p {
+            margin: 8px 0;
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        .card table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .card table th, .card table td {
+            text-align: left;
+            padding: 4px;
+            font-size: 0.9em;
+        }
+
+        .card table th {
+            background: #f4f4f4;
+        }
+
+        .card table td {
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Product Variants</h1>
+    <div class="card-container">
+        {% for data in product_variants %}
+            <div class="card">
+                <p>Vendor: {{ data.variant.created_by.vendor_name }}</p>
+                <!-- Product Image -->
+                <img src="{{ data.variant.image.url }}" alt="Product Image">
+               
+
+                <!-- Card Content -->
+                <div class="card-content">
+                    <h3>{{ data.variant.product.name }}</h3>
+                    <p> {{ data.variant.sku }}</p>
+                    <p><strong>Description:</strong> {{ data.variant.description }}</p>
+                    <p><strong>Price:</strong> ₹{{ data.variant.price }}</p>
+                    <p><strong>Stock:</strong> {{ data.variant.stock }}</p>
+
+                    <!-- Attributes Table -->
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>features</th>
+                                <th>  </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attribute in data.attributes %}
+                                <tr>
+                                    <td>{{ attribute.attribute.name }}</td>
+                                    <td>{{ attribute.value.value }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

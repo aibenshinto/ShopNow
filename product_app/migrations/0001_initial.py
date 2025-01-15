@@ -55,6 +55,7 @@ class Migration(migrations.Migration):
                 ('image', models.ImageField(blank=True, null=True, upload_to='product_variant_images/')),
                 ('price', models.IntegerField(null=True)),
                 ('stock', models.IntegerField(null=True)),
+                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='authentication_app.vendor')),
                 ('product', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='product_app.product')),
             ],
         ),
@@ -63,6 +64,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('attribute', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='product_app.attribute')),
+                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='authentication_app.vendor')),
                 ('value', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='product_app.attributevalue')),
                 ('variant', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='product_app.productvariant')),
             ],
