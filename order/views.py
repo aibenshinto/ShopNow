@@ -16,7 +16,7 @@ from rest_framework.permissions import AllowAny
 from django.db.models import Sum
 from rest_framework.permissions import IsAuthenticated
 from django.core.exceptions import PermissionDenied
-
+from authentication_app.models import Vendor
 # class CreateOrderView(APIView):
     
 #     def post(self, request):
@@ -123,6 +123,8 @@ class CreateOrderView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def send_order_notification(self, order):
+        vendor = Vendor.objects.get(vendor_email=order.vendor_email)
+        store_name = vendor.store_name
         subject = f"🎉 New Order: {order.order_id} 🎉"
         
         customer_message = f"""
@@ -135,12 +137,12 @@ class CreateOrderView(APIView):
 
         You’ll receive an update once your order is on its way! 🚚
 
-        Thank you for choosing us — we can’t wait to serve you again! 💖
+        Thank you for choosing {store_name} — we can’t wait to serve you again! 💖
 
         If you have any questions, feel free to reach out to us anytime.
 
         Warm regards,  
-        The [Your Store Name] Team
+        The {store_name} Team
         """
         vendor_message = f"""
         🚨 **New Order Alert!** 🚨
@@ -252,6 +254,7 @@ class OrderHistoryView(APIView):
 
 #         except Order.DoesNotExist:
 #             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
 class UpdateOrderStatusView(APIView):
     authentication_classes = [JWTAuthentication]  # Specify JWTAuthentication here
     permission_classes = [IsAuthenticated]
@@ -347,15 +350,28 @@ class ReorderView(APIView):
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
     def _send_reorder_notification(self, order):
-        subject = f"Re-Order: {order.order_id}"
-        
+        subject = f"🔄 Re-Order Confirmation: {order.order_id} 🔄"
+        vendor = Vendor.objects.get(vendor_email=order.vendor_email)
+        store_name = vendor.store_name
         # Send email to the customer
         if order.customer_email:
-            customer_message = (
-                f"Your re-order has been placed successfully.\n"
-                f"Order ID: {order.order_id}\n"
-                f"Total: ${order.total_price}"
-            )
+            customer_message = f"""
+            🔄 **Thank You for Reordering, {order.user}!** 🔄
+
+            We’re thrilled to see you back! Your re-order has been successfully placed. 🛍️
+
+            **Order ID**: {order.order_id}  
+            **Total Price**: ${order.total_price}
+
+            Rest assured, we’re already preparing your order, and you’ll receive an update once it’s on its way! 🚚
+
+            Your continued trust means the world to us, and we look forward to serving you again. 💖
+
+            If you have any questions, our team is here for you anytime.
+
+            Warm regards,  
+            The {store_name} Team
+            """
             send_mail(
                 subject,
                 customer_message,
@@ -365,11 +381,23 @@ class ReorderView(APIView):
 
         # Notify the vendor
         if order.vendor_email:
-            vendor_message = (
-                f"Customer reordered items.\n"
-                f"New Order ID: {order.order_id}\n"
-                f"Total: ${order.total_price}"
-            )
+            vendor_message = f"""
+            🔔 **Re-Order Alert!** 🔔
+
+            Great news! A customer has placed a reorder. 🛒
+
+            **Order ID**: {order.order_id}  
+            **Customer**: {order.user}  
+            **Total Price**: ${order.total_price}  
+            **Status**: Processing
+
+            Please prioritize this re-order for timely preparation and delivery. 🚚
+
+            Thanks for your dedication and exceptional service!
+
+            Best regards,  
+            The MultiVendor Team
+            """
             send_mail(
                 subject,
                 vendor_message,
