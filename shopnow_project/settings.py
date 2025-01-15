@@ -61,14 +61,10 @@ INSTALLED_APPS = [
     'django_filters',
     'order',
     'cart_app',
-<<<<<<< HEAD
     'reviews',
     'shippinaddress',
     'rest_framework_simplejwt',
-=======
     'vendor',
-    'shippinaddress',
->>>>>>> 088fd83c1a22ee0c7329756b6547b95e63685e74
 ]
 
 SOCIAL_ACCOUNT_PROVIDERS ={
