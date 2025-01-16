@@ -13,6 +13,7 @@ class Attribute(models.Model):
     name = models.CharField(max_length=225)
     created_by = models.ForeignKey(Vendor,on_delete=models.CASCADE)
     
+ 
     def __str__(self):
         return f"{self.name}"
     
