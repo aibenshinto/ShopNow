@@ -18,3 +18,5 @@ env/
 
 # Environment variables file
 .env
+
+**/migrations/*
