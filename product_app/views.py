@@ -12,6 +12,8 @@ from authentication_app.models import Vendor
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import render
 from django.db.models import Q
+from reviews.models import Review,Reply
+from django.db.models import Avg
 # Product API
 
 class ProductAPIView(APIView):
@@ -193,22 +195,36 @@ class ProductVariantAttributeAPIView(generics.RetrieveUpdateDestroyAPIView):
 def product_variants_list(request):
     # Fetch all product variants
     product_variants = ProductVariant.objects.all()
-
+    
     # Create a dictionary to store attributes and vendor name for each product variant
     product_variant_data = []
 
     for variant in product_variants:
         # Fetch the attributes for each product variant
         attributes = ProductVariantAttribute.objects.filter(variant=variant)
-
+        reviews = Review.objects.filter(product_variant=variant)
+        reviews_with_replies = []
+        for review in reviews:
+            replies = Reply.objects.filter(review=review)  # Fetch replies for the review
+            reviews_with_replies.append({
+                "review": review,
+                "replies": replies
+            })
+        total_reviews = reviews.count()
+        average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] if total_reviews > 0 else 0
         # Corrected vendor_name, directly referencing variant.created_by
         vendor_name = variant.created_by if variant.created_by else "No Vendor"
         
         # Append product variant data along with vendor name
         product_variant_data.append({
             "variant": variant,
-            "attributes": attributes,
-            "vendor_name": vendor_name
+            "attributes" : attributes,
+            "vendor_name": vendor_name,
+            "reviews"    : reviews,
+            "total_reviews": total_reviews,
+            "average_rating": average_rating,
+            'image_url': variant.image.url if variant.image else None,
+            "reviews_with_replies": reviews_with_replies
         })
 
     context = {

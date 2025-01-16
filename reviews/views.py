@@ -5,6 +5,8 @@ from rest_framework import status
 from .models import Review, ProductVariant, Reply,Customer,Vendor
 from .serializers import ReviewSerializer, ReplySerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
+
 class ReviewAPIView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]

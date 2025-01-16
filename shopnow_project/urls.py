@@ -3,6 +3,7 @@ from django.urls import path,include
 from django.contrib.staticfiles.views import serve
 from django.conf import settings
 from django.conf.urls.static import static
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('authentication_app.urls')),
@@ -20,5 +21,6 @@ urlpatterns = [
     path('', include('shippinaddress.urls')),
     path('api/', include('payment_app.urls')),
     path('api/favicon.ico', serve, {'path': 'favicon.ico'}),  # Serve favicon.ico as static
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) \
+  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
