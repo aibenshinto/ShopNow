@@ -13,7 +13,7 @@ class RazorpayOrder(models.Model):
         default="created",  # Default status is "created", can be updated to "paid"
         choices=[('created', 'Created'), ('paid', 'Paid'), ('failed', 'Failed')]
     )  # Payment status for the order (created, paid, or failed)
-
+    unique_order_id = models.CharField(max_length=255, unique=True,null=True)
     def __str__(self):
         return f"Razorpay Order: {self.order_id} for Cart #{self.cart.id}"
     
