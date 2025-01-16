@@ -1,11 +1,15 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status,generics
 from rest_framework.permissions import IsAuthenticated
 from admin_panel.serializers import CustomerUpdateSerializer, VendorUpdateSerializer
 from authentication_app.models import Vendor, Customer
 from authentication_app.serializers import VendorSerializer, CustomerSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from product_app.models import ProductVariant,ProductVariantAttribute
+from django.shortcuts import render
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from product_app.serializers import ProductVariantAttributeSerializer
 
 CUSTOMER_NOT_FOUND = "Customer not found."
 VENDOR_NOT_FOUND = "Vendor not found."
@@ -21,6 +25,23 @@ class AdminRestrictedView(APIView):
     def is_staff(self, user):
         return user.is_authenticated and user.is_staff
    
+
+class ProductVariantAttributeListAPIView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request):
+        if request.user.is_authenticated and request.user.is_staff:
+            # Fetch all product variant attributes
+            product_variant_attributes = ProductVariantAttribute.objects.all()
+            # Serialize the data
+            serializer = ProductVariantAttributeSerializer(product_variant_attributes, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(
+            {"error": "Unauthorized access."},
+            status=status.HTTP_403_FORBIDDEN
+        )
 
 # Vendor API View
 class VendorListCreateAPIView(AdminRestrictedView):

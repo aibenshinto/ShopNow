@@ -1,21 +1,31 @@
 from django.db import models
-from django.contrib.auth.models import User
+from authentication_app.models import Customer  # Import the Customer model
 from product_app.models import Product, ProductVariant  # Importing from product_app
 
 class Cart(models.Model):
     """
-    Model to represent shopping carts for both authenticated users and guest users.
+    Model to represent shopping carts for both authenticated customers and guest users.
     """
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)  # For logged-in users
+    customer = models.OneToOneField(Customer, on_delete=models.CASCADE, null=True, blank=True)  # For authenticated customers
     session_id = models.CharField(max_length=255, null=True, blank=True)  # For guest users
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+
+    
 
     def __str__(self):
-        if self.user:
-            return f"Cart for {self.user.username}"
+        if self.customer:
+            return f"Cart for {self.customer.customer_name}"
         return f"Cart for session: {self.session_id}"
-
+    
+    def calculate_total(self):
+        total = 0
+        # Iterate over each item in the cart and sum the total
+        for item in self.items.all():
+            total += item.get_price() * item.quantity
+        return total
+    
 class CartItem(models.Model):
     """
     Model to represent items in the cart.
@@ -26,6 +36,7 @@ class CartItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
 
     def __str__(self):
         if self.variant:
@@ -43,15 +54,6 @@ class CartItem(models.Model):
         if self.variant:
             return self.variant.stock >= self.quantity  # Check variant stock
         return self.product.stock >= self.quantity  # Check product stock
+    
 
-class ShippingAddress(models.Model):
-    cart = models.OneToOneField(Cart, on_delete=models.CASCADE, related_name="shipping_address")
-    address_line_1 = models.CharField(max_length=255)
-    address_line_2 = models.CharField(max_length=255, blank=True, null=True)
-    city = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
-    postal_code = models.CharField(max_length=20)
-    country = models.CharField(max_length=100)
 
-    def __str__(self):
-        return f"{self.address_line_1}, {self.city}, {self.state}, {self.country}"

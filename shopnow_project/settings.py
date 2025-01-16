@@ -61,6 +61,14 @@ INSTALLED_APPS = [
     'django_filters',
     'order',
     'cart_app',
+    'reviews',
+    
+    
+    'rest_framework_simplejwt',
+
+    'vendor',
+    'shippinaddress',
+    'payment_app'
 
 ]
 
@@ -85,16 +93,23 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
-
+from datetime import timedelta
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+# }
 MIDDLEWARE = [
+    
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware', 
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware', 
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'social_django.middleware.SocialAuthExceptionMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'shopnow_project.urls'
@@ -197,6 +212,8 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
+
+
 # Example for Gmail (SMTP)
 # In development, use Console backend to print emails to the terminal
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -206,3 +223,6 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'dairyhubservices@gmail.com'
 EMAIL_HOST_PASSWORD = 'yhwxpetbusuitgag'
 
+
+RAZORPAY_KEY_ID = "rzp_test_jLruu3x4ZBDxbm"
+RAZORPAY_SECRET_KEY = "R9G0kaz4tyUNLYmVb1iekV7L"
