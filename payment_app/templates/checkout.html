@@ -72,13 +72,13 @@
     <script type="text/javascript">
         document.getElementById('payButton').onclick = function(e) {
             e.preventDefault();
-            const token = localStorage.getItem('access_token');
+            // const token = localStorage.getItem('access_token');
             // Fetch the order details from the backend API (update the URL with your correct cart ID)
             fetch('/api/create-razorpay-order/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM2OTMyNzc5LCJpYXQiOjE3MzY5MzI0NzksImp0aSI6IjllYzM3Nzk1NzNkMDQ3NDJhZDRiM2U5MjMwMTYwZGI5IiwidXNlcl9pZCI6MX0.F6lZBTATdQ9A2-2wSFZsfYEroCe0gDg5hg39qLUvwKk`,
+                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3MDIxNTk0LCJpYXQiOjE3MzcwMjEyOTQsImp0aSI6ImU4ZjAwZjQ1MmM4ZTRlZGY5Zjk5NDczZTJkZmE5ZWViIiwidXNlcl9pZCI6M30.ydSekoUcnTJ94n6H-oEzhv6yEb8bcVyEmpnvDQSW-cY`,
                 },
                 body: JSON.stringify({
                     // Additional data can go here if required
@@ -86,6 +86,9 @@
             })
             .then(response => response.json())
             .then(data => {
+               
+                
+
                 if (data.razorpay_order_id) {
                     // Define Razorpay checkout options
                     var options = {

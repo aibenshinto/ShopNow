@@ -9,4 +9,4 @@ class AddressBookSerializer(serializers.ModelSerializer):
 class AddressBookCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = AddressBook
-        exclude = ("user",)
+        fields = "__all__"

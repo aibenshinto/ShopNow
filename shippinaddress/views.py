@@ -37,7 +37,7 @@ class UserAddressListCreateView(APIView):
 
         serializer = AddressBookCreateSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)  # Save the address with the authenticated user
+            serializer.save(customer=customer)  # Save the address with the authenticated user
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

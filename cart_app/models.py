@@ -10,7 +10,7 @@ class Cart(models.Model):
     session_id = models.CharField(max_length=255, null=True, blank=True)  # For guest users
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+    is_checked = models.BooleanField(default=False)
 
     
 
