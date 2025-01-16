@@ -131,13 +131,11 @@ class ProductVariantAttributeCreateAPIView(generics.CreateAPIView):
             raise PermissionDenied({"detail": "Only vendors or admins can create."})
         serializer.save(created_by=vendor if vendor else None)
 
-# Product Variant Attribute API
-class ProductVariantAttributeAPIView(generics.RetrieveUpdateDestroyAPIView):
+class ProductVariantAttributeListAPIView(generics.ListAPIView):
     queryset = ProductVariantAttribute.objects.all()
     serializer_class = ProductVariantAttributeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     authentication_classes = [JWTAuthentication]
-    
     
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -152,6 +150,29 @@ class ProductVariantAttributeAPIView(generics.RetrieveUpdateDestroyAPIView):
         else:
             # Guest users: Show all
             return ProductVariantAttribute.objects.all()
+       
+
+# Product Variant Attribute API
+class ProductVariantAttributeAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ProductVariantAttribute.objects.all()
+    serializer_class = ProductVariantAttributeSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    authentication_classes = [JWTAuthentication]
+    
+    
+    # def get_queryset(self):
+    #     if self.request.user.is_authenticated:
+    #         if hasattr(self.request.user, 'vendor_profile'):
+    #             # Vendor: Only show their product variant attributes
+    #             return ProductVariantAttribute.objects.filter(
+    #                 variant__product__created_by=self.request.user.vendor_profile
+    #             )
+    #         else:
+    #             # Authenticated customers or admins: Show all
+    #             return ProductVariantAttribute.objects.all()
+    #     else:
+    #         # Guest users: Show all
+    #         return ProductVariantAttribute.objects.all()
         
     def perform_update(self, serializer):
         if self.request.user.is_authenticated and (hasattr(self.request.user, 'vendor_profile') or self.request.user.is_staff):
