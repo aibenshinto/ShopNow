@@ -9,7 +9,7 @@ class Vendor(models.Model):
     vendor_address = models.TextField()
     store_name = models.CharField(max_length=100)
     store_address = models.TextField()
-    
+    is_approved = models.BooleanField(default=False)  
 
     def __str__(self):
         return self.store_name
@@ -21,6 +21,7 @@ class Customer(models.Model):
     customer_phone = models.CharField(max_length=15)
     customer_email = models.EmailField(unique=True)
     customer_address = models.TextField()
+    
 
     def __str__(self):
         return self.customer_name
