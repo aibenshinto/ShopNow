@@ -168,6 +168,7 @@ class ViewCartView(APIView):
                 total_price += item_total_price  # Accumulate the total price
 
             return Response({
+                "cart_id": cart.id,
                 "cart_items": items,
                 "total_price": total_price
             })
