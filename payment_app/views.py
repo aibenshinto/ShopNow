@@ -62,6 +62,8 @@ def checkout_view(request, cart_id):
     
     # Get the cart details by cart_id
     cart = get_object_or_404(Cart, id=cart_id)
+
+    
     
     # You can pass additional cart details if needed (e.g., cart items, total, etc.)
     return render(request, 'checkout.html', {'cart_id': cart.id, 'total_price': cart.calculate_total(), 'razorpay_key': settings.RAZORPAY_KEY_ID})
@@ -118,10 +120,12 @@ from rest_framework.permissions import IsAuthenticated
 # API to create a Razorpay order for a cart
 # API to create a Razorpay order for a cart
 from django.core.mail import send_mail
-
+from authentication_app.models import Vendor
 from django.core.mail import send_mail
 from order.models import Order, OrderItem
 import uuid
+from django.core.exceptions import PermissionDenied
+
 from django.utils.timezone import now
 
 class CreateRazorpayOrderAPIView(APIView):
@@ -196,6 +200,7 @@ class CreateRazorpayOrderAPIView(APIView):
                 total=total,
                 store_name=vendor.store_name
             )
+            
 
             return Response({
                 "razorpay_order_id": razorpay_order['id'],
@@ -244,3 +249,108 @@ class CreateRazorpayOrderAPIView(APIView):
         # Send emails
         send_mail(subject, customer_message, settings.DEFAULT_FROM_EMAIL, [customer.customer_email])
         send_mail(subject, vendor_message, settings.DEFAULT_FROM_EMAIL, [vendor.vendor_email])
+
+
+class ReorderCreateRazorpayOrderAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, order_id):
+        """
+        Reorder a previous order and create a Razorpay order for payment.
+        """
+        try:
+            # Ensure the user is a customer
+            if not hasattr(request.user, 'customer_profile'):
+                raise PermissionDenied("Only customers are allowed to reorder.")
+
+            # Fetch the original order
+            original_order = Order.objects.get(order_id=order_id, user=request.user)
+            items = original_order.items.all()
+            if not items:
+                return Response({"error": "Original order has no items."}, status=status.HTTP_404_NOT_FOUND)
+
+            # Calculate total price
+            total_price = sum(item.price * item.quantity for item in items)
+            if total_price <= 0:
+                return Response({"error": "Total price must be greater than zero."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Generate unique order ID
+            unique_order_id = f"REORDER-{now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6].upper()}"
+
+            # Create a Razorpay order
+            razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_SECRET_KEY))
+            razorpay_order = razorpay_client.order.create({
+                "amount": int(total_price * 100),
+                "currency": "INR",
+                "payment_capture": "1"
+            })
+
+            # Save RazorpayOrder instance
+            razorpay_order_obj = RazorpayOrder.objects.create(
+                cart=None,  # No cart associated for reorders
+                payment_id=razorpay_order['id'],
+                unique_order_id=unique_order_id
+            )
+
+            # Create the new order and copy the original details
+            new_order = Order.objects.create(
+                user=request.user,
+                order_id=unique_order_id,
+                total_price=total_price,
+                customer_email=original_order.customer_email,
+                vendor_email=original_order.vendor_email,
+                razorpay_order=razorpay_order_obj
+            )
+
+            # Duplicate the items for the new order
+            for item in items:
+                OrderItem.objects.create(
+                    order=new_order,
+                    product_name=item.product_name,
+                    quantity=item.quantity,
+                    price=item.price,
+                    unique_order_id=unique_order_id
+                )
+
+            # Send notifications
+            self._send_notifications(
+                customer_email=new_order.customer_email,
+                vendor_email=new_order.vendor_email,
+                unique_order_id=unique_order_id,
+                total_price=total_price,
+                store_name=Vendor.objects.get(vendor_email=new_order.vendor_email).store_name
+            )
+
+            return Response({
+                "razorpay_order_id": razorpay_order['id'],
+                "unique_order_id": unique_order_id,
+                "total_price": total_price,
+                "currency": "INR"
+            }, status=status.HTTP_201_CREATED)
+
+        except Order.DoesNotExist:
+            return Response({"error": "Original order not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def _send_notifications(self, customer_email, vendor_email, unique_order_id, total_price, store_name):
+        subject = f"🔄 Reorder Created: {unique_order_id} 🔄"
+
+        if customer_email:
+            customer_message = f"""
+            Thank you for reordering! Your new order has been placed.
+
+            **Order ID**: {unique_order_id}  
+            **Total Price**: ₹{total_price}
+            """
+            send_mail(subject, customer_message, settings.DEFAULT_FROM_EMAIL, [customer_email])
+
+        if vendor_email:
+            vendor_message = f"""
+            A new reorder has been placed by a customer.
+
+            **Order ID**: {unique_order_id}  
+            **Total Price**: ₹{total_price}
+            """
+            send_mail(subject, vendor_message, settings.DEFAULT_FROM_EMAIL, [vendor_email])
