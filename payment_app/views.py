@@ -76,12 +76,17 @@ def order_confirmation(request):
 
 # API to retrieve payment details for a cart
 class RetrievePaymentDetailsAPIView(APIView):
-    def get(self, request, cart_id):
-        try:
-            cart = get_object_or_404(Cart, id=cart_id)
+    """
+    API view to retrieve payment details using the Razorpay order ID.
+    """
 
-            # Get the Razorpay order for the cart
-            razorpay_order = RazorpayOrder.objects.get(cart=cart)
+    def get(self, request, payment_id):
+        try:
+            # Get the Razorpay order using the Razorpay order ID
+            razorpay_order = get_object_or_404(RazorpayOrder, payment_id=payment_id)
+
+            # Get the associated cart
+            cart = razorpay_order.cart
 
             return Response({
                 "razorpay_order_id": razorpay_order.order_id,
@@ -92,7 +97,7 @@ class RetrievePaymentDetailsAPIView(APIView):
             }, status=status.HTTP_200_OK)
 
         except RazorpayOrder.DoesNotExist:
-            return Response({"error": "No Razorpay order found for this cart."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "No Razorpay order found for this ID."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -164,7 +169,7 @@ class CreateRazorpayOrderAPIView(APIView):
             # Create RazorpayOrder with the correct fields
             razorpay_order_obj = RazorpayOrder.objects.create(
                 cart=cart,
-                payment_id=razorpay_order['id'],
+                order_id=razorpay_order['id'],
                 unique_order_id=unique_order_id
             )
 
